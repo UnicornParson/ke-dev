@@ -4,7 +4,11 @@ set -euo pipefail
 
 KERNEL_DIR="kernel/stable"
 BIN_DIR="bin"
-BASE_DIT="$PWD"
+LOGFILE="$PWD/tmp/make_ke.log"
+BASE_DIR=$PWD
+touch $LOGFILE
+
+echo "Building kernel..."
 if [[ $# -ne 1 ]]; then
     echo "Usage: $0 <path-to-kernel-config>"
     exit 1
@@ -27,50 +31,46 @@ if [[ ! -d "$BIN_DIR" ]]; then
     exit 1
 fi
 
-# Temporary build directory
-BUILD_DIR="tmp/make_ke"
-rm -rf "$BUILD_DIR"
-mkdir -p $BUILD_DIR
-LOGFILE="tmp/make_ke.log"
-cleanup() {
-    rm -rf "$BUILD_DIR"
-}
-trap cleanup EXIT
+mkdir -p "$(dirname "$LOGFILE")"
 
-# Prepare kernel config
-cp -vf "$CONFIG_PATH" "$KERNEL_DIR/.config"
+echo "build ke" > "$LOGFILE"
+
 cd "$KERNEL_DIR"
-# Configure and build kernel out-of-tree
-echo "build ke" > $LOGFILE # new file
-make -C "$KERNEL_DIR" O="$BUILD_DIR" clean
 
-make mrproper
+# Полная очистка дерева
+make mrproper 2>&1 | tee -ai "$LOGFILE"
 
-make -C "$KERNEL_DIR" O="$BUILD_DIR" olddefconfig 2>&1 | tee -ai "$LOGFILE"
-make -C "$KERNEL_DIR" O="$BUILD_DIR" -j"$(nproc)" 2>&1 | tee -ai "$LOGFILE"
+# Копируем конфиг прямо в .config
+cp -vf "$BASE_DIR/$CONFIG_PATH" .config | tee -ai "$LOGFILE"
 
-# Expected artifacts
-BZIMAGE="$BUILD_DIR/arch/x86/boot/bzImage"
-VMLINUX="$BUILD_DIR/vmlinux"
+# Актуализируем конфиг
+make olddefconfig 2>&1 | tee -ai "$LOGFILE"
+
+# Сборка ядра
+make -j"$(nproc)" 2>&1 | tee -ai "$LOGFILE"
+
+# Проверка артефактов
+BZIMAGE="arch/x86/boot/bzImage"
+VMLINUX="vmlinux"
 
 if [[ ! -f "$BZIMAGE" ]]; then
-    echo "Error: bzImage not produced"
+    echo "Error: bzImage not produced" | tee -ai "$LOGFILE"
     exit 1
 fi
 
 if [[ ! -f "$VMLINUX" ]]; then
-    echo "Error: vmlinux not produced"
+    echo "Error: vmlinux not produced" | tee -ai "$LOGFILE"
     exit 1
 fi
 
-# Atomically replace kernel artifacts in bin/
+# Копирование результатов
 rm -f \
-    "$BIN_DIR/bzImage" \
-    "$BIN_DIR/vmlinux" \
-    "$BIN_DIR/kernel.config"
+    "$BASE_DIR/$BIN_DIR/bzImage" \
+    "$BASE_DIR/$BIN_DIR/vmlinux" \
+    "$BASE_DIR/$BIN_DIR/kernel.config"
 
-cp "$BZIMAGE" "$BIN_DIR/bzImage"
-cp "$VMLINUX" "$BIN_DIR/vmlinux"
-cp "$BUILD_DIR/.config" "$BIN_DIR/kernel.config"
+cp "$BZIMAGE" "$BASE_DIR/$BIN_DIR/bzImage"
+cp "$VMLINUX" "$BASE_DIR/$BIN_DIR/vmlinux"
+cp ".config" "$BASE_DIR/$BIN_DIR/kernel.config"
 
-echo "Kernel build completed successfully"
+echo "Kernel build completed successfully" | tee -ai "$LOGFILE"
