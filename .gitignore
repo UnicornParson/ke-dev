@@ -39,3 +39,9 @@
 
 # debug information files
 *.dwo
+
+
+# folders
+
+tmp/*.log
+bin/make_ke/
