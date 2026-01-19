@@ -1,0 +1,165 @@
+{
+    "models": [
+      {
+        "model": "deepseek-r1:32b",
+        "title": "deepseek-r1:32b (Remote)",
+        "completionOptions": {},
+        "apiBase": "http://192.168.0.18:11434",
+        "maxPromptTokens": 131072,
+        "contextLength": 131072,
+        "capabilities": ["agent"],
+        "provider": "ollama"
+      },
+      {
+        "model": "deepseek-coder:33b",
+        "title": "deepseek-coder:33b (Remote)",
+        "completionOptions": {},
+        "apiBase": "http://192.168.0.18:11434",
+        "maxPromptTokens": 131072,
+        "contextLength": 131072,
+        "capabilities": ["agent"],
+        "provider": "ollama"
+      },
+  
+      {
+        "model": "gemma3:27b",
+        "title": "gemma3 (Remote)",
+        "completionOptions": {},
+        "apiBase": "http://192.168.0.18:11434",
+        "maxPromptTokens": 131072,
+        "contextLength": 131072,
+        "capabilities": ["agent"],
+        "provider": "ollama"
+      },
+      {
+        "model": "qwen3-coder:30b",
+        "title": "qwen3 (Remote)",
+        "completionOptions": {},
+        "apiBase": "http://192.168.0.18:11434",
+        "maxPromptTokens": 131072,
+        "contextLength": 131072,
+        "capabilities": ["agent"],
+        "provider": "ollama"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "title": "qwen2.5-coder:14b (Remote)",
+        "completionOptions": {},
+        "apiBase": "http://192.168.0.18:11434",
+        "maxPromptTokens": 131072,
+        "contextLength": 131072,
+        "capabilities": ["agent"],
+        "provider": "ollama"
+      },
+  
+      {
+        "model": "deepseek-coder-v2:16b",
+        "title": "deepseek-coder-v2:16b (Remote)",
+        "completionOptions": {},
+        "apiBase": "http://192.168.0.18:11434",
+        "maxPromptTokens": 131072,
+        "contextLength": 131072,
+        "capabilities": ["agent"],
+        "provider": "ollama"
+      },
+      {
+        "model": "deepseek-coder:6.7b",
+        "title": "deepseek-coder:6.7b (Local)",
+        "completionOptions": {},
+        "apiBase": "http://127.0.0.1:11434",
+        "maxPromptTokens": 131072,
+        "contextLength": 131072,
+        "capabilities": ["agent"],
+        "provider": "ollama"
+      },
+      {
+        "model": "deepseek-coder-v2:16b-lite-instruct-q4_K_Mb",
+        "title": "deepseek-coder-v2-lite (Local)",
+        "completionOptions": {},
+        "apiBase": "http://127.0.0.1:11434",
+        "maxPromptTokens": 131072,
+        "contextLength": 131072,
+        "capabilities": ["agent"],
+        "provider": "ollama"
+      },
+    ],
+    "tabAutocompleteModel": {
+      "title": "starcoder2:7b",
+      "provider": "ollama",
+      "model": "starcoder2:7b",
+      "apiBase": "http://192.168.0.18:11434",
+      "maxPromptTokens": 400000,
+      "contextLength": 131072,
+      "prefixPercentage": 0.5,
+      "multilineCompletions": "always"
+      
+    },
+    "embeddingsProvider": {
+      "provider": "ollama",
+      "model": "mxbai-embed-large",
+      "apiBase": "http://127.0.0.1:11434",
+      "maxChunkSize": 4096,
+      "maxBatchSize": 500,
+      "local_files_only": false
+    },
+    "tools": [
+      {
+        "name": "terminal",
+        "class": "TerminalTool"
+      }
+    ],
+    "modelRoles": {
+      "default": "qwen2.5-coder:14b (Agent Support)",
+      "agent": "qwen2.5-coder:14b (Agent Support)"
+    },
+    "contextProviders": [
+      {
+        "name": "code",
+        "params": {}
+      },
+      {
+        "name": "folder",
+        "params": {}
+      },
+      {
+        "name": "codebase",
+        "params": {}
+      }
+    ],
+    "slashCommands": [
+      {
+        "name": "share",
+        "description": "Export the current chat session to markdown"
+      },
+      {
+        "name": "cmd",
+        "description": "Generate a shell command"
+      },
+      {
+        "name": "commit",
+        "description": "Generate a git commit message"
+      }
+    ],
+    "agents": {
+      "custom": [
+        {
+          "name": "refactor-agent",
+          "systemMessage": "Ты senior-разработчик. Рефактори код по шагам: 1) Анализ 2) План 3) Реализация 4) Тесты",
+          "tools": ["terminal", "search"],
+          "temperature": 0.3
+        },
+        {
+          "name": "bug-fixer",
+          "systemMessage": "Найди и исправь ошибки. Используй: 1) Логирование 2) Тесты 3) Поиск уязвимостей 4) Оптимизация",
+          "tools": ["terminal", "search"],
+          "temperature": 0.1
+        },
+        {
+          "name": "wibe",
+          "systemMessage": "Ты senior-разработчик. напиши хороший понятный код с уместными комментариями на английском. Пиши код по шагам: 1) Анализ 2) План 3) Реализация 4) Тесты",
+          "temperature": 0.1,
+          "tools": ["terminal", "search"]
+        }
+      ]
+    }
+  }
