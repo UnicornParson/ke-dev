@@ -1,69 +1,105 @@
-import subprocess
+#!/usr/bin/env python3
+
+import argparse
 import pathlib
+import subprocess
 import sys
-import time
 
-QEMU = "qemu-system-x86_64"
 
-BZIMAGE = pathlib.Path("bzImage")
-INITRAMFS = pathlib.Path("initramfs.cpio.gz")
-TESTAPP = pathlib.Path("testapp")
+def parse_args():
+    p = argparse.ArgumentParser(
+        description="Run Linux kernel test in QEMU BusyBox environment"
+    )
+    p.add_argument(
+        "--bzimage",
+        required=True,
+        type=pathlib.Path,
+        help="Path to bzImage"
+    )
+    p.add_argument(
+        "--initramfs",
+        required=True,
+        type=pathlib.Path,
+        help="Path to initramfs.cpio.gz"
+    )
+    p.add_argument(
+        "--testapp",
+        required=True,
+        type=pathlib.Path,
+        help="Path to test application binary"
+    )
+    p.add_argument(
+        "--qemu",
+        default="qemu-system-x86_64",
+        help="QEMU binary (default: qemu-system-x86_64)"
+    )
+    return p.parse_args()
 
-if not BZIMAGE.exists():
-    sys.exit("bzImage not found")
-if not INITRAMFS.exists():
-    sys.exit("initramfs not found")
-if not TESTAPP.exists():
-    sys.exit("testapp not found")
 
-qemu_cmd = [
-    QEMU,
-    "-kernel", str(BZIMAGE),
-    "-initrd", str(INITRAMFS),
-    "-m", "512M",
-    "-nographic",
-    "-append",
-    "console=ttyS0 panic=-1",
-    "-fsdev",
-    f"local,id=fsdev0,path={TESTAPP.parent.resolve()},security_model=none",
-    "-device",
-    "virtio-9p-pci,fsdev=fsdev0,mount_tag=hostshare",
-]
+def main():
+    args = parse_args()
 
-proc = subprocess.Popen(
-    qemu_cmd,
-    stdin=subprocess.PIPE,
-    stdout=subprocess.PIPE,
-    stderr=subprocess.STDOUT,
-    text=True,
-    bufsize=1,
-)
+    for path, name in [
+        (args.bzimage, "bzImage"),
+        (args.initramfs, "initramfs"),
+        (args.testapp, "testapp"),
+    ]:
+        if not path.exists():
+            sys.exit(f"{name} not found: {path}")
+        if not path.is_file():
+            sys.exit(f"{name} is not a file: {path}")
 
-def send(cmd):
-    proc.stdin.write(cmd + "\n")
-    proc.stdin.flush()
+    qemu_cmd = [
+        args.qemu,
+        "-kernel", str(args.bzimage),
+        "-initrd", str(args.initramfs),
+        "-m", "512M",
+        "-nographic",
+        "-append", "console=ttyS0 panic=-1",
+        "-fsdev",
+        f"local,id=fsdev0,path={args.testapp.parent.resolve()},security_model=none",
+        "-device",
+        "virtio-9p-pci,fsdev=fsdev0,mount_tag=hostshare",
+    ]
 
-test_finished = False
+    proc = subprocess.Popen(
+        qemu_cmd,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
+    )
 
-for line in proc.stdout:
-    print(line, end="")
+    def send(cmd):
+        proc.stdin.write(cmd + "\n")
+        proc.stdin.flush()
 
-    if "INIT READY" in line:
-        send("cp /mnt/host/testapp /opt/testapp")
-        send("chmod +x /opt/testapp")
-        send("/opt/testapp")
-        send("echo TESTAPP_EXIT_CODE=$?")
-        send("poweroff")
+    test_finished = False
 
-    if "TESTAPP_EXIT_CODE=" in line:
-        test_finished = True
+    for line in proc.stdout:
+        print(line, end="")
 
-proc.wait()
+        if "INIT READY" in line:
+            send(f"cp /mnt/host/{args.testapp.name} /opt/testapp")
+            send("chmod +x /opt/testapp")
+            send("/opt/testapp")
+            send("echo TESTAPP_EXIT_CODE=$?")
+            send("poweroff")
 
-if proc.returncode != 0:
-    sys.exit(f"QEMU exited with code {proc.returncode}")
+        if "TESTAPP_EXIT_CODE=" in line:
+            test_finished = True
 
-if not test_finished:
-    sys.exit("Test did not finish correctly")
+    proc.wait()
 
-print("Test finished successfully")
+    if proc.returncode != 0:
+        sys.exit(f"QEMU exited with code {proc.returncode}")
+
+    if not test_finished:
+        sys.exit("Test did not finish correctly")
+
+    print("Test finished successfully")
+
+
+if __name__ == "__main__":
+    main()
