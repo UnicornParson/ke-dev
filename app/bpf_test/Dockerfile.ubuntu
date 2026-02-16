@@ -1,0 +1,25 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt update && apt upgrade -y && apt install -y \
+    build-essential \
+    clang \
+    llvm \
+    libelf-dev \
+    libbpf-dev \
+    linux-tools-generic \
+    cmake \
+    pkg-config \
+    wget \
+    dpkg-dev \
+    linux-headers-$(uname -r) \
+    linux-tools-$(uname -r)
+
+WORKDIR /
+
+COPY entrypoint.sh /opt/entrypoint.sh
+COPY build.sh /opt/entrypoint.sh
+RUN chmod +x /opt/*.sh
+
+ENTRYPOINT ["/opt/entrypoint.sh"]
