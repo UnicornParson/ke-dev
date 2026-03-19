@@ -1,3 +1,6 @@
 [submodule "kernel/stable"]
 	path = kernel/stable
 	url = https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
+[submodule "kernel/dev"]
+	path = kernel/dev
+	url = https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git

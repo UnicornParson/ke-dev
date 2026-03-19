@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-KERNEL_DIR="kernel/stable"
+KERNEL_DIR="kernel/dev"
 BIN_DIR="bin"
 LOGFILE="$PWD/tmp/make_ke.log"
 BASE_DIR=$PWD
