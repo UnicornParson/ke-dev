@@ -9,17 +9,6 @@ BASE_DIR=$PWD
 touch $LOGFILE
 
 echo "Building kernel..."
-if [[ $# -ne 1 ]]; then
-    echo "Usage: $0 <path-to-kernel-config>"
-    exit 1
-fi
-
-CONFIG_PATH="$1"
-
-if [[ ! -f "$CONFIG_PATH" ]]; then
-    echo "Error: config file not found: $CONFIG_PATH"
-    exit 1
-fi
 
 if [[ ! -d "$KERNEL_DIR" ]]; then
     echo "Error: kernel directory not found: $KERNEL_DIR"
@@ -37,32 +26,10 @@ echo "build ke" > "$LOGFILE"
 
 cd "$KERNEL_DIR"
 
-# Полная очистка дерева
-make mrproper 2>&1 | tee -ai "$LOGFILE"
 
-# Копируем конфиг прямо в .config
-cp -vf "$BASE_DIR/$CONFIG_PATH" .config | tee -ai "$LOGFILE"
-
-TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-LOCALVER="kedev_$TIMESTAMP"
-
-if [[ -x scripts/config ]]; then
-    echo "use scripts/config  in $KERNEL_DIR"
-    scripts/config --set-str CONFIG_LOCALVERSION "$LOCALVER"
-else
-    echo "NO scripts/config  in $KERNEL_DIR"
-    if grep -q "^CONFIG_LOCALVERSION=" .config; then
-        sed -i "s|^CONFIG_LOCALVERSION=.*|CONFIG_LOCALVERSION=\"$LOCALVER\"|" .config
-    else
-        echo "CONFIG_LOCALVERSION=\"$LOCALVER\"" >> .config
-    fi
-fi
-
-# Актуализируем конфиг
-make olddefconfig 2>&1 | tee -ai "$LOGFILE"
 
 # Сборка ядра
-make -j"$(nproc --all)" 2>&1 | tee -ai "$LOGFILE"
+make -j"$(nproc)" 2>&1 | tee -ai "$LOGFILE"
 
 # Проверка артефактов
 BZIMAGE="arch/x86/boot/bzImage"
