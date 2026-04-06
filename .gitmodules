@@ -4,3 +4,6 @@
 [submodule "kernel/dev"]
 	path = kernel/dev
 	url = https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
+[submodule "kernel/test"]
+	path = kernel/test
+	url = https://github.com/UnicornParson/linux_test.git
